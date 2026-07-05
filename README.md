@@ -41,8 +41,44 @@ npm start        # serve the built app on $PORT (what Railway runs)
   (Phase 3) without moving the design around. No ad network is integrated.
 - **Shareability:** every report lives at `/report/<VIN>` — a clean public URL.
 
-## Env vars
+## Deploy (Railway)
 
-Copy `.env.example` to `.env`. Only `VITE_`-prefixed values reach the browser
-(treat them as public). The Supabase `service_role` key and research API keys
-are server-only and never go in client code or a `VITE_` var.
+Railway builds from GitHub on every push to `main` using `railway.json`
+(`npm ci && npm run build`, then `npm start` serving `dist/` on `$PORT`).
+One-time setup: Railway → New Project → Deploy from GitHub repo →
+`alnutile/used-cars`, then set the service variables below and generate a
+domain (HTTPS is automatic).
+
+## Migrations (CI/CD)
+
+Database schema lives in `supabase/migrations/*.sql`. The
+`Migrate database` workflow (`.github/workflows/migrate.yml`) runs
+`supabase db push` whenever a migration file lands on `main` — already-applied
+migrations are skipped, so it's safe to re-run (also runnable by hand via
+workflow_dispatch). The `CI` workflow type-checks and builds every PR.
+
+## Env vars — the complete list
+
+**Railway service variables** (client-side; `VITE_` values are public by design):
+
+| Variable | Value |
+|---|---|
+| `VITE_SUPABASE_URL` | The project's API URL |
+| `VITE_SUPABASE_ANON_KEY` | The publishable (anon) key — safe in the browser |
+
+**GitHub Actions secrets** (repo → Settings → Secrets and variables → Actions),
+used only by the migration workflow:
+
+| Secret | Where it comes from |
+|---|---|
+| `SUPABASE_ACCESS_TOKEN` | supabase.com/dashboard/account/tokens |
+| `SUPABASE_PROJECT_ID` | The project ref (short id in the dashboard URL) |
+| `SUPABASE_DB_PASSWORD` | Project → Settings → Database (resettable) |
+
+**Supabase Edge Function secrets** (next phase, set via `supabase secrets set`,
+never in the client or a `VITE_` var): `ANTHROPIC_API_KEY`, `YELP_API_KEY`,
+`GOOGLE_PLACES_API_KEY`. The `service_role` key is auto-available to edge
+functions and must never leave the server.
+
+For local dev, copy `.env.example` to `.env` (gitignored) and fill in the two
+`VITE_` values.
