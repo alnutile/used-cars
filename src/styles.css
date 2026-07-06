@@ -298,12 +298,18 @@ a {
 
 .vin-form-row {
   display: flex;
+  align-items: flex-end;
   gap: 0.6rem;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 0.45rem;
   box-shadow: var(--shadow);
+}
+
+/* Grows into a rounded box once a pasted page pushes it past one line. */
+.vin-form-row.is-multiline {
+  border-radius: var(--radius);
 }
 
 .vin-input {
@@ -317,6 +323,10 @@ a {
   letter-spacing: 0.06em;
   padding: 0.5rem 0.9rem;
   color: var(--ink);
+  resize: none;
+  overflow-y: auto;
+  line-height: 1.5;
+  max-height: 220px;
 }
 
 .vin-input::placeholder {
