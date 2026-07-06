@@ -118,7 +118,11 @@ export default function ReportView({ report }: { report: Report }) {
           <section className="card">
             <h2>Title &amp; history</h2>
             <ul className="fact-list">
-              <li><span className="pill pill-go">{report.titleHistory.status}</span></li>
+              <li>
+                <span className={`pill ${/clean/i.test(report.titleHistory.status) ? 'pill-go' : 'pill-caution'}`}>
+                  {report.titleHistory.status}
+                </span>
+              </li>
               <li>{report.titleHistory.owners}</li>
               <li>{report.titleHistory.odometer}</li>
             </ul>
@@ -148,7 +152,9 @@ export default function ReportView({ report }: { report: Report }) {
               <div className="price-stat">
                 <span className="price-label">Typical range</span>
                 <span className="price-value price-range">
-                  {money(priceCheck.estimatedLow)} – {money(priceCheck.estimatedHigh)}
+                  {priceCheck.estimatedLow != null && priceCheck.estimatedHigh != null
+                    ? `${money(priceCheck.estimatedLow)} – ${money(priceCheck.estimatedHigh)}`
+                    : '—'}
                 </span>
               </div>
             </div>

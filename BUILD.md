@@ -59,6 +59,19 @@ Then, any path can add the optional **Agent** add-on (sync from an outside syste
   placeholders.
 - **HTTPS only** (Railway gives it — don't undo it).
 
+### Non-negotiable honesty (applies to every path)
+
+- **Never deploy fabricated or sample data as if it were real.** If the real
+  data path isn't built yet, either block the page or gate it behind an
+  unmissable label — and say so in plain words when handing the build over
+  ("the reports are sample data; the research pipeline is not built").
+- **Missing API keys are a question to ask, not a reason to stub.** If a phase
+  needs credentials (Supabase project, Anthropic key, review APIs), ask for
+  them at the START of the phase. Don't silently build around the gap and
+  park the project at a demo.
+- **End every phase by naming what is real and what is still stubbed.** One
+  list, no spin. "Deployed" is not "done" if the core loop is fake.
+
 ### Deploy (every path)
 
 - Push to GitHub → Railway builds on push. First time: new project → pick repo →
@@ -69,7 +82,11 @@ Then, any path can add the optional **Agent** add-on (sync from an outside syste
 
 - Vite + React + TS (or a single HTML file if truly trivial). Use `localStorage`
   if it needs to remember anything. No backend, no secrets.
-- Serve the built `dist/` on `$PORT` (e.g. `vite preview --host 0.0.0.0 --port $PORT`).
+- Serve the built `dist/` on `$PORT` with a real static server:
+  `serve -s dist -l tcp://0.0.0.0:$PORT` (the `-s` gives SPA routing fallback).
+  **Never use `vite preview` as the production server** — it is a dev tool with
+  a host allowlist, so the moment a custom domain points at it, visitors get
+  "Blocked request. This host is not allowed." (Learned on Railway.)
 - **Done when:** it builds and deploys over HTTPS.
 
 ## Path B — database-driven, anonymous
@@ -130,6 +147,16 @@ When he wants the app to sync from a system he already uses (Google Tasks, etc.)
   web app's `devDependencies` can desync the lockfile and break an unrelated deploy.
 - **Make batch jobs resilient and loud:** one bad item shouldn't abort the batch,
   and "did nothing" should say *why*.
+- **QA the smallest breakpoint before handing over.** Load the deployed site at
+  a phone width, not just desktop. Specific gotcha: when a flex row stacks to
+  `flex-direction: column` in a media query, reset `align-items` too — the
+  desktop value (e.g. `flex-end`) stops the stacked children from stretching
+  and they shrink, misalign, and overlap.
+- **"Start simple, layer in" has a failure mode:** an AI builder will happily
+  build everything that needs no keys or money (design, deploy, sample data)
+  and then stop, leaving a polished shell that looks done. The honesty rules
+  above are the guardrail — the walking skeleton is fine, silently parking
+  there is not.
 
 ## How to work with him
 

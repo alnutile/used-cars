@@ -49,8 +49,9 @@ export interface TitleHistory {
 
 export interface PriceCheck {
   askingPrice: number | null
-  estimatedLow: number
-  estimatedHigh: number
+  // Null when no estimate is available (e.g. the AI layer isn't configured).
+  estimatedLow: number | null
+  estimatedHigh: number | null
   read: string
   method: string
 }

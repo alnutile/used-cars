@@ -170,30 +170,57 @@ Do not start from scratch. Pull these across:
 
 ## Suggested build phases (start simple, layer in - per the playbook)
 
-- **Phase 0 (MVP):** VIN in -> NHTSA decode/recalls/ratings + dealer lookup (Yelp +
-  Google + BBB) + Claude synthesis -> shareable report page, everything cached by
-  VIN and dealer. Anonymous auth, Supabase, Railway, RLS on. No scraping, no paid
-  valuation yet (estimate value from comps or show "add your own" and move on).
-  This proves the full loop cheaply and is genuinely useful on its own.
+Each phase has an **exit test** — the thing that must be REAL (not sample data)
+before the phase is called done. A deployed page rendering placeholder content
+does not pass any exit test; if a phase stalls on missing keys or budget, say
+so and ask, don't quietly stop at a demo (see the playbook's honesty rules).
+
+- **Design shell (done):** the report design translated to React, deployed on
+  Railway over HTTPS, sample data clearly labeled as preview. *Exit test: the
+  deployed page renders the full report design at desktop and phone widths.*
+  Note for next time: this shell is a fine first step, but it is not "Phase 0"
+  and must not be presented as a working product — every report it serves is
+  fake.
+- **Phase 0 (MVP):** VIN in -> NHTSA decode/recalls/ratings + Claude synthesis
+  -> shareable report page, cached by VIN. Anonymous access, Supabase, Railway,
+  RLS on. No scraping, no paid valuation yet (LLM-estimate value and label the
+  method), dealer section degrades honestly when the input is a bare VIN with
+  no seller info. *Exit test: a VIN never seen before returns a report built
+  from live NHTSA data, and the second lookup of the same VIN serves from
+  cache with zero external calls.*
 - **Phase 1:** Add listing-URL scraping (Firecrawl/Browserless) so users paste a
-  URL instead of hunting for the VIN.
+  URL instead of hunting for the VIN, and dealer research (Yelp + Google + BBB)
+  keyed off the listing's seller. *Exit test: a pasted listing URL yields the
+  car AND a researched seller section.*
 - **Phase 2:** Add a real market-valuation API for accurate price reads.
+  *Exit test: the price range comes from the API, not an estimate.*
 - **Phase 3:** Add ad slots (AdSense/Ezoic) to results and report pages.
 - **Phase 4:** Optional accounts (Path C) for saved cars and price-drop alerts.
 
+**Keys needed per phase — collect at phase start:** Phase 0: Supabase project
+(URL + publishable key for the client; edge functions get the service key
+automatically) and `ANTHROPIC_API_KEY` as an edge-function secret. Phase 1:
+Firecrawl/Browserless key, Yelp Fusion key, Google Places key. Phase 2:
+valuation API key.
+
 ---
 
-## Open questions for Alfred (business calls, not tech)
+## Open questions for Alfred — DECIDED (kept for the record)
 
-1. **MVP input:** VIN-first (cheap, reliable, ships fast) or URL-first (nicer UX
-   but needs the paid scraping service on day one)? Recommendation: VIN-first.
-2. **Valuation:** pay for a valuation API (accurate) or LLM-estimate from
-   comparable listings (cheaper, rougher) to start? Recommendation: estimate first,
-   add the API in Phase 2.
-3. **Accounts:** confirm anonymous-now / accounts-later, or do you want saved cars
-   in the first version?
-4. **Per-lookup budget:** rough ceiling on what a single fresh (uncached) research
-   run may cost? That number decides which paid services are in scope now vs later.
+1. **MVP input:** ~~VIN-first or URL-first?~~ **Decided: VIN-first.** The input
+   box still accepts a URL/pasted page and extracts a VIN when one is present;
+   full listing scraping is Phase 1.
+2. **Valuation:** ~~API or LLM estimate?~~ **Decided: LLM estimate first**,
+   clearly labeled as an estimate in the report; real valuation API in Phase 2.
+3. **Accounts:** ~~anonymous or accounts?~~ **Decided: anonymous now**, accounts
+   in Phase 4.
+4. **Per-lookup budget:** still Alfred's call before Phase 1/2 turn on paid
+   services. Phase 0's marginal cost is one Claude call per uncached VIN
+   (NHTSA is free), so no ceiling needed yet.
+
+Lesson for the next brief: unanswered open questions plus missing keys are
+where an AI build stalls. Either answer them in the brief, or mark ONE
+recommended default per question as "proceed with this unless told otherwise."
 
 ---
 
