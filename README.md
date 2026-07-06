@@ -1,0 +1,84 @@
+# CarRundown (used-cars)
+
+Paste a VIN, get the rundown: the car **and** the seller, with a plain-English
+go / caution / flag verdict — before you drive out to see it.
+
+- **What the product is:** see [BUSINESS.md](./BUSINESS.md)
+- **How this gets built:** see [BUILD.md](./BUILD.md) (Alfred's build-with-confidence playbook)
+
+## Status
+
+**Phase: project setup + design.** The frontend is scaffolded and the full
+visual design is in place, rendered from a typed `Report` shape with sample
+data. The research pipeline (Supabase edge function, NHTSA/Yelp/BBB lookups,
+Claude synthesis, cache tables) is the next phase — the UI already renders the
+exact shape that pipeline will produce, so wiring it up is a data-layer swap,
+not a redesign.
+
+## Stack
+
+Vite + React + TypeScript. Supabase (data/auth, next phase). Railway (hosting,
+deploys on push). Node 22 (pinned via `.nvmrc` + `engines`).
+
+## Run it
+
+```bash
+npm install
+npm run dev      # local dev server
+npm run build    # type-check + production build
+npm start        # serve the built app on $PORT (what Railway runs)
+```
+
+## Design notes
+
+- **Audience:** normal people — teenagers buying a first car and their parents.
+  Friendly, plain-English, zero jargon.
+- **Verdict system:** `go` (green) / `caution` (amber) / `flag` (red), shown as
+  a dashboard-style gauge on the report page.
+- **Ad slots:** every ad position renders through `src/components/AdSlot.tsx`
+  (leaderboard on home + report bottom, 300×250 sticky rail on wide report
+  pages). They reserve real layout space now so an ad network can drop in later
+  (Phase 3) without moving the design around. No ad network is integrated.
+- **Shareability:** every report lives at `/report/<VIN>` — a clean public URL.
+
+## Deploy (Railway)
+
+Railway builds from GitHub on every push to `main` using `railway.json`
+(`npm ci && npm run build`, then `npm start` serving `dist/` on `$PORT`).
+One-time setup: Railway → New Project → Deploy from GitHub repo →
+`alnutile/used-cars`, then set the service variables below and generate a
+domain (HTTPS is automatic).
+
+## Migrations (CI/CD)
+
+Database schema lives in `supabase/migrations/*.sql`. The
+`Migrate database` workflow (`.github/workflows/migrate.yml`) runs
+`supabase db push` whenever a migration file lands on `main` — already-applied
+migrations are skipped, so it's safe to re-run (also runnable by hand via
+workflow_dispatch). The `CI` workflow type-checks and builds every PR.
+
+## Env vars — the complete list
+
+**Railway service variables** (client-side; `VITE_` values are public by design):
+
+| Variable | Value |
+|---|---|
+| `VITE_SUPABASE_URL` | The project's API URL |
+| `VITE_SUPABASE_ANON_KEY` | The publishable (anon) key — safe in the browser |
+
+**GitHub Actions secrets** (repo → Settings → Secrets and variables → Actions),
+used only by the migration workflow:
+
+| Secret | Where it comes from |
+|---|---|
+| `SUPABASE_ACCESS_TOKEN` | supabase.com/dashboard/account/tokens |
+| `SUPABASE_PROJECT_ID` | The project ref (short id in the dashboard URL) |
+| `SUPABASE_DB_PASSWORD` | Project → Settings → Database (resettable) |
+
+**Supabase Edge Function secrets** (next phase, set via `supabase secrets set`,
+never in the client or a `VITE_` var): `ANTHROPIC_API_KEY`, `YELP_API_KEY`,
+`GOOGLE_PLACES_API_KEY`. The `service_role` key is auto-available to edge
+functions and must never leave the server.
+
+For local dev, copy `.env.example` to `.env` (gitignored) and fill in the two
+`VITE_` values.

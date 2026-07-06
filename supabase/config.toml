@@ -1,0 +1,3 @@
+# Minimal Supabase CLI config — enough for `supabase link` + `supabase db push`
+# in CI. Local-stack settings can be added later if we run Supabase locally.
+project_id = "used-cars"
